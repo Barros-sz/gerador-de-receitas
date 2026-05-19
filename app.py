@@ -18,8 +18,7 @@ client = genai.Client(api_key=GEMINI_API_KEY)
 # Inicializa o Flask
 app = Flask(__name__)
 
-
-CORS(app, resources={r"/*": {"origins": "https://front-end-receitas-blush.vercel.app"}})
+CORS(app, resources={r"/*": {"origins": "https://front-end-gera-receita.vercel.app/"}})
 # app.py (Parte 2)
 
 def generate_recipe(ingredientes):
