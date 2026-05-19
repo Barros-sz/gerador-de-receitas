@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chef IA - Gerador de Receitas Inteligente</title>
+    <style>
+        :root {
+            --primary-color: #e67e22;
+            --primary-hover: #d35400;
+            --background-color: #f9f9f9;
+            --card-color: #ffffff;
+            --text-color: #2c3e50;
+            --text-light: #7f8c8d;
+            --border-radius: 12px;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--text-light);
+        }
+
+        .card {
+            background: var(--card-color);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .ingredients-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+            min-height: 40px;
+        }
+
+        .ingredient-tag {
+            background-color: #edf2f7;
+            color: #4a5568;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .ingredient-tag span {
+            cursor: pointer;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .btn-generate {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1rem;
+            margin-top: 15px;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0,0,0,0.1);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+            margin: 0 auto 10px;
+        }
+
+        /* Recipe Result */
+        .recipe-result {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .recipe-title {
+            color: var(--primary-color);
+            border-bottom: 2px solid #f1f2f6;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .recipe-meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            font-style: italic;
+            color: var(--text-light);
+        }
+
+        .recipe-section {
+            margin-bottom: 20px;
+        }
+
+        .recipe-section h3 {
+            margin-bottom: 10px;
+            color: #34495e;
+        }
+
+        .recipe-section ul, .recipe-section ol {
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+
+        .recipe-section li {
+            margin-bottom: 8px;
+        }
+
+        .error-message {
+            display: none;
+            background-color: #fadbd8;
+            color: #78281f;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 5px solid #e74c3c;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Chef IA 🍳</h1>
+            <p>Insira os ingredientes que você tem em casa e a Inteligência Artificial criará uma receita sob medida.</p>
+        </header>
+
+        <!-- Mensagem de Erro Global -->
+        <div class="error-message" id="errorMessage"></div>
+
+        <!-- Card de Entrada -->
+        <div class="card">
+            <div class="input-group">
+                <input type="text" id="ingredientInput" placeholder="Ex: Frango, Tomate, Creme de leite...">
+                <button id="btnAdd">Adicionar</button>
+            </div>
+            <small style="color: var(--text-light);">Adicione no mínimo 3 ingredientes.</small>
+
+            <div class="ingredients-list" id="ingredientsList">
+                <!-- As tags de ingredientes vão aparecer aqui dinamicamente -->
+            </div>
+
+            <button class="btn-generate" id="btnGenerate" disabled>Gerar Receita Mágica ✨</button>
+        </div>
+
+        <!-- Área de Carregamento -->
+        <div class="loading" id="loadingArea">
+            <div class="spinner"></div>
+            <p>O Chef IA está combinando os sabores e escrevendo sua receita...</p>
+        </div>
+
+        <!-- Resultado da Receita -->
+        <div class="card recipe-result" id="recipeResult">
+            <h2 class="recipe-title" id="resTitle">Nome da Receita</h2>
+            <div class="recipe-meta">
+                <span id="resPortions">🍽️ 4 porções</span>
+                <span id="resTime">⏱️ 45 minutos</span>
+            </div>
+
+            <div class="recipe-section">
+                <h3>Ingredientes</h3>
+                <ul id="resIngredients"></ul>
+            </div>
+
+            <div class="recipe-section">
+                <h3>Modo de Preparo</h3>
+                <ol id="resSteps"></ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURAÇÃO DA API: 
+        const API_URL = '/generate';
+        let ingredientsArray = [];
+
+        const ingredientInput = document.getElementById('ingredientInput');
+        const btnAdd = document.getElementById('btnAdd');
+        const ingredientsList = document.getElementById('ingredientsList');
+        const btnGenerate = document.getElementById('btnGenerate');
+        const loadingArea = document.getElementById('loadingArea');
+        const recipeResult = document.getElementById('recipeResult');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Adicionar ingrediente ao clicar no botão ou pressionar Enter
+        function addIngredient() {
+            const value = ingredientInput.value.trim();
+            if (value && !ingredientsArray.includes(value)) {
+                ingredientsArray.push(value);
+                renderTags();
+                ingredientInput.value = '';
+                ingredientInput.focus();
+                checkRequirements();
+            }
+        }
+
+        btnAdd.addEventListener('click', addIngredient);
+        ingredientInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addIngredient();
+        });
+
+        // Remove um ingrediente da lista
+        function removeIngredient(index) {
+            ingredientsArray.splice(index, 1);
+            renderTags();
+            checkRequirements();
+        }
+
+        // Renderiza as Tags visualmente na tela
+        function renderTags() {
+            ingredientsList.innerHTML = '';
+            ingredientsArray.forEach((ing, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'ingredient-tag';
+                tag.innerHTML = `${ing} <span onclick="removeIngredient(${index})">&times;</span>`;
+                ingredientsList.appendChild(tag);
+            });
+        }
+
+        // Valida se o botão de gerar pode ser liberado (Mínimo 3 itens)
+        function checkRequirements() {
+            if (ingredientsArray.length >= 3) {
+                btnGenerate.disabled = false;
+            } else {
+                btnGenerate.disabled = true;
+            }
+        }
+
+        // Envia a requisição para a API Flask
+        btnGenerate.addEventListener('click', async () => {
+            // Reset de tela
+            recipeResult.style.display = 'none';
+            errorMessage.style.display = 'none';
+            loadingArea.style.display = 'block';
+            btnGenerate.disabled = true;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ ingredientes: ingredientsArray })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    displayRecipe(data.dados_receita);
+                } else {
+                    showError(data.message || 'Ocorreu um erro ao gerar sua receita.');
+                }
+
+            } catch (error) {
+                showError('Não foi possível conectar ao servidor. Certifique-se de que a API Flask está rodando.');
+                console.error(error);
+            } finally {
+                loadingArea.style.display = 'none';
+                checkRequirements();
+            }
+        });
+
+        // Mostra os dados retornados estruturados no HTML
+        function displayRecipe(recipe) {
+            document.getElementById('resTitle').innerText = recipe.nome_da_receita;
+            document.getElementById('resPortions').innerText = `🍽️ ${recipe.porcoes}`;
+            document.getElementById('resTime').innerText = `⏱️ ${recipe.tempo_de_preparo}`;
+
+            // Lista de Ingredientes
+            const ulIngredients = document.getElementById('resIngredients');
+            ulIngredients.innerHTML = '';
+            recipe.ingredientes.forEach(ing => {
+                const li = document.createElement('li');
+                li.innerText = ing;
+                ulIngredients.appendChild(li);
+            });
+
+            // Modo de Preparo
+            const olSteps = document.getElementById('resSteps');
+            olSteps.innerHTML = '';
+            recipe.modo_de_preparo.forEach(step => {
+                const li = document.createElement('li');
+                li.innerText = step;
+                olSteps.appendChild(li);
+            });
+
+            // Exibe o card de resultado
+            recipeResult.style.display = 'block';
+            recipeResult.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Exibe alertas de erro na interface
+        function showError(message) {
+            errorMessage.innerText = message;
+            errorMessage.style.display = 'block';
+            errorMessage.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
