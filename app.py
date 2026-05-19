@@ -19,8 +19,11 @@ client = genai.Client(api_key=GEMINI_API_KEY)
 app = Flask(__name__)
 
 # Permite a origem específica sem a barra no final e também permite métodos comuns
-CORS(app, resources={r"/*": {"origins": ["https://front-end-gera-receita.vercel.app", "http://localhost:5500"]}})
-
+CORS(app, resources={r"/*": {
+    "origins": ["https://front-end-gera-receita.vercel.app"],
+    "methods": ["POST", "GET", "OPTIONS"],
+    "allow_headers": ["Content-Type"]
+}})
 def generate_recipe(ingredientes):
     # Junta os ingredientes enviados em uma única linha de texto
     lista_ingredientes = ", ".join(ingredientes)
